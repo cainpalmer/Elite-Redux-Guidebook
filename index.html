@@ -165,7 +165,7 @@ function sprite(s,sh){return `<img data-p="${spUrl(s,sh)}" src="${base+spUrl(s,s
 function moveRow(id,lv){
   const m=mv[id];if(!m)return"";
   const p=m.pwr?m.pwr:"—",a=m.acc?m.acc:"—";
-  return `<div class="mv" data-c="${CATS[m.split]||""}"><span class="lv">${lv??""}</span><span><span class="nm lk" data-mv="${id}">${esc(m.name)}</span>${chip(m.types[0])}</span><span class="num">${SPLIT[m.split]||""} · ${p}/${a}/${m.pp}</span><small>${esc(m.desc)}</small></div>`;
+  return `<div class="mv" data-c="${CATS[m.split]||""}"><span class="lv">${lv??""}</span><span><span class="nm lk" data-mv="${id}">${esc(m.name)}</span>${chip(m.types[0])}</span><span class="num">${SPLIT[m.split]||""} · ${p}/${a}/${m.pp}</span><small>${esc(mdesc(m))}</small></div>`;
 }
 function box(title,ids,lv){
   if(!ids||!ids.length)return"";
@@ -178,6 +178,7 @@ function evoText(kd,rs){
   k==="EVO_MEGA_EVOLUTION"?"Mega evolves with "+it(rs):k==="EVO_MOVE_MEGA_EVOLUTION"?"Mega evolves with "+mo(rs):
   k==="EVO_PRIMAL_REVERSION"?"Primal reversion":clean(k.replace("EVO_",""))+(rs?" "+clean(rs):"");
 }
+const mdesc=m=>/^\s*not done yet\.?\s*$/i.test(m.desc||"")?(m.lDesc||m.desc):m.desc;
 const lnk=id=>byId[id]?`<a class="link" data-go="${id}">${esc(byId[id].name)}</a>`:"?";
 
 function applyFilter(root){
@@ -266,7 +267,7 @@ function indexExtra(){
   list.forEach(s=>new Set([...s.stats.abis,...s.stats.inns]).forEach(a=>abN[a]=(abN[a]||0)+1));
   const byName=(a,b)=>a.a.name.localeCompare(b.a.name);
   ABL=D.abilities.filter(a=>a.id>0&&a.name&&!/^-+$/.test(a.name)).map(a=>({a,t:(a.name+" "+a.desc).toLowerCase()})).sort(byName);
-  MVL=D.moves.filter(m=>m.name&&!/^-+$/.test(m.name)).map(m=>({a:m,t:(m.name+" "+m.desc).toLowerCase()})).sort(byName);
+  MVL=D.moves.filter(m=>m.name&&!/^-+$/.test(m.name)).map(m=>({a:m,t:(m.name+" "+mdesc(m)).toLowerCase()})).sort(byName);
   LCL=(D.locations.maps||[]).map(m=>{
     const meth=[];
     for(const k in m){
@@ -300,7 +301,7 @@ function fill(){
   }else if(tab==="moves"){
     const ft=$("#ft")?.value,fc=$("#fc")?.value;
     all=MVL.filter(x=>(!q||x.t.includes(q))&&(!ft||x.a.types.includes(+ft))&&(!fc||(CATS[x.a.split]||[]).includes(+fc)));
-    row=({a:m})=>`<div class="row" data-k="mv" data-i="${m.id}"><div class="rh"><b>${esc(m.name)}</b>${chip(m.types[0])}<span class="num">${SPLIT[m.split]||""} · ${m.pwr||"—"}/${m.acc||"—"}/${m.pp}</span></div><div class="d">${esc(m.desc)}</div><div class="det"></div></div>`;
+    row=({a:m})=>`<div class="row" data-k="mv" data-i="${m.id}"><div class="rh"><b>${esc(m.name)}</b>${chip(m.types[0])}<span class="num">${SPLIT[m.split]||""} · ${m.pwr||"—"}/${m.acc||"—"}/${m.pp}</span></div><div class="d">${esc(mdesc(m))}</div><div class="det"></div></div>`;
   }else{
     all=LCL.filter(x=>!q||x.t.includes(q));
     row=l=>`<div class="row" data-k="lc" data-i="${l.id}"><div class="rh"><b>${esc(l.name)}</b><span class="num">${l.n} Pokémon</span></div><div class="det"></div></div>`;
