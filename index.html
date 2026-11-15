@@ -111,7 +111,17 @@ async function load(){
   }
   throw lastErr||new Error("no data");
 }
-function sortList(){list.sort(mode==="dex"?(a,b)=>(a.dex?.id||1e9)-(b.dex?.id||1e9)||a.id-b.id:(a,b)=>a.id-b.id);list.forEach((s,i)=>{s._i=i;byId[s.id]=s})}
+function dexOrder(){
+  const g=new Map(),out=[],isM=x=>/ Mega\b/.test(x.name),bn=x=>x.name.replace(/ Mega( [XYZ])?\b/,"");
+  for(const x of list){const k=x.dex?.id||1e9;if(!g.has(k))g.set(k,[]);g.get(k).push(x)}
+  [...g.keys()].sort((p,q)=>p-q).forEach(k=>{
+    const v=g.get(k).sort((p,q)=>p.id-q.id),megas=v.filter(isM),used=new Set();
+    v.filter(x=>!isM(x)).forEach(n=>{out.push(n);megas.forEach(m=>{if(!used.has(m)&&bn(m)===n.name){used.add(m);out.push(m)}})});
+    megas.forEach(m=>{if(!used.has(m))out.push(m)});
+  });
+  return out;
+}
+function sortList(){const o=mode==="dex"?dexOrder():[...list].sort((p,q)=>p.id-q.id);list.splice(0,list.length,...o);list.forEach((s,i)=>{s._i=i;byId[s.id]=s})}
 function index(){
   D.moves.forEach(m=>{mv[m.id]=m;MOVE[m.NAME]=m.name});D.items.forEach(x=>ITEM[x.NAME]=x.name);D.abilities.forEach(a=>ab[a.id]=a);
   list=D.species.filter(s=>s.id>0&&s.name&&s.name!=="??????????");
