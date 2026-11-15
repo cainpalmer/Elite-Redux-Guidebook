@@ -12,7 +12,7 @@
 <title>ER Pocket Dex</title>
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#e6ece7;--ink:#16252b;--mute:#566a6f;--card:#f6f9f6;--line:#c4d0c8;--t:#7a8;--t2:#456;--bar:#16252b;--barink:#f2f7f3}
+:root{--paper:#e6ece7;--ink:#16252b;--mute:#566a6f;--card:#f6f9f6;--line:#c4d0c8;--t:#7a8;--t2:#456;--maxw:1100px;--bar:#16252b;--barink:#f2f7f3}
 @media(prefers-color-scheme:dark){:root{--paper:#0f1719;--ink:#e6efe9;--mute:#9bacaa;--card:#182327;--line:#2a3a3e}}
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -27,10 +27,17 @@ header input::placeholder{color:#c9d6d0}
 #stage{position:relative;perspective:1900px;overflow-x:clip;--lx:0px;--ly:0px}
 #page,.leaf{max-width:600px;margin:0 auto;padding:0 0 40px;min-height:80vh;background:var(--paper);touch-action:pan-y}
 .leaf{position:absolute;top:var(--ly);left:var(--lx);right:var(--lx);overflow:hidden;min-height:0;transform-origin:left center;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 0 30px #0006;pointer-events:none;z-index:4}
+@media(min-width:1280px){
+ :root{--maxw:1760px}
+ .spread.s4{grid-template-columns:minmax(0,.95fr) minmax(0,1.15fr) minmax(0,2fr);align-items:start}
+ .s4>div{padding-bottom:18px;min-width:0}
+ .mc{display:grid;grid-template-columns:1fr 1fr;align-items:start}.mc>div{min-width:0}
+ .mc .mv{grid-template-columns:30px 1fr}.mc .mv .num,.mc .mv small{grid-column:2}.mc .mv .num{text-align:left;margin:0}
+}
 @media(min-width:720px){
  #stage{--lx:24px;--ly:20px;padding:20px 24px 28px}
- #page,.leaf{max-width:1100px;padding:0;border-radius:10px}
- .leaf{left:calc(var(--lx) + (100% - 48px - min(1100px,100% - 48px))/2);right:calc(var(--lx) + (100% - 48px - min(1100px,100% - 48px))/2);top:var(--ly);padding:0;transform-origin:50% 50%}
+ #page,.leaf{max-width:var(--maxw);padding:0;border-radius:10px}
+ .leaf{left:calc(var(--lx) + (100% - 48px - min(var(--maxw),100% - 48px))/2);right:calc(var(--lx) + (100% - 48px - min(var(--maxw),100% - 48px))/2);top:var(--ly);padding:0;transform-origin:50% 50%}
  .spread{display:grid;grid-template-columns:1fr 1fr;min-height:70vh}
  .pg{padding-bottom:18px}
  .pg.r{padding-top:2px}
@@ -196,23 +203,22 @@ function build(i,shiny){
   (s.SEnc||[]).forEach(e=>places.push(`${esc(D.mapsT[e.map]||"Unnamed area")} <span class="num">${esc(D.scriptedEncoutersHowT[e.how]||"")}</span>`));
   const egg=st.eggG.map(g=>clean(D.eggT[g]||"").replace("egg group ","")).join(", ");
   const hw=s.dex?.hw;
-  const mvs=box("Level-up moves",s.levelUpMoves,1)+box("Egg moves",s.eggMoves)+box("TM / HM moves",s.TMHMMoves)+box("Tutor moves",s.tutor);
+  const lvl=box("Level-up moves",s.levelUpMoves,1),egm=box("Egg moves",s.eggMoves),tm=box("TM / HM moves",s.TMHMMoves),tut=box("Tutor moves",s.tutor),mvs=lvl+egm+tm+tut;
   const bar=mvs?`<div class="fbar"><span>Highlight</span>${FN.map((n,k)=>`<button data-f="${k}" class="${fsel.has(k)?"on":""}" aria-pressed="${fsel.has(k)}"><i style="background:${FC[k]}"></i>${n}</button>`).join("")}</div>`:"";
-  const html=`<div class="spread"><div class="pg l">
-  <div class="hero"><div class="art" id="art">${sprite(s,view)}</div>
+  const hero=`<div class="hero"><div class="art" id="art">${sprite(s,view)}</div>
     <div class="views">${VN.map((n,k)=>`<button data-v="${k}" class="${k===view?"on":""}" aria-label="${n}">${sprite(s,k)}<span>${n}</span></button>`).join("")}</div>
     <h1>${esc(s.name)}</h1><div class="no">No. ${s.dex?.id||"??"} · page ${i+1} of ${list.length}</div>
-    <div class="chips">${types.map(chip).join("")}</div></div>
-  ${s.dex?.desc||hw?`<section>${s.dex?.desc?`<p class="desc">${esc(s.dex.desc)}</p>`:""}${hw?`<div class="meta"><span>Height ${(hw[0]/10).toFixed(1)} m</span><span>Weight ${(hw[1]/10).toFixed(1)} kg</span></div>`:""}</section>`:""}
-  <section><h2>Base stats · ${bst}</h2><div class="st">${st.base.map((v,k)=>`<span>${STATS[k]}</span><b>${v}</b><div class="bar"><i class="${mx===mn?"":v===mx?"hi":v===mn?"lo":""}" style="width:${Math.min(100,v/180*100)}%"></i></div>`).join("")}</div></section>
-  <section><h2>Abilities</h2>${abis.map(A).join("")||"—"}</section>
-  <section><h2>Innates</h2>${inns.map(A).join("")||"—"}</section></div>
-  <div class="pg r">
-  ${into.length||from.length?`<section><h2>Evolution</h2>${from.map(x=>`<div>From ${x}</div>`).join("")}${into.map(x=>`<div>Into ${x}</div>`).join("")}</section>`:""}
-  ${forms.length?`<section><h2>Other forms</h2>${forms.map(f=>`<div>${lnk(f.id)}</div>`).join("")}</section>`:""}
-  ${places.length?`<section><details open><summary>Where to find (${places.length})</summary>${places.map(p=>`<div class="mv" style="display:block">${p}</div>`).join("")}</details></section>`:""}
-  ${bar}${mvs}
-  <section><div class="meta"><span>Egg group: ${esc(egg||"—")}</span><span>EV yield: ${st.EVY.map((v,k)=>v?v+" "+STATS[k]:"").filter(Boolean).join(", ")||"—"}</span><span>Data v${esc(D._v)}</span><span><a class="link" id="ord">Order: ${mode==="dex"?"Dex number":"Game order"} (tap to switch)</a></span></div></section></div></div>`;
+    <div class="chips">${types.map(chip).join("")}</div></div>`;
+  const desc=s.dex?.desc||hw?`<section>${s.dex?.desc?`<p class="desc">${esc(s.dex.desc)}</p>`:""}${hw?`<div class="meta"><span>Height ${(hw[0]/10).toFixed(1)} m</span><span>Weight ${(hw[1]/10).toFixed(1)} kg</span></div>`:""}</section>`:"";
+  const stats=`<section><h2>Base stats · ${bst}</h2><div class="st">${st.base.map((v,k)=>`<span>${STATS[k]}</span><b>${v}</b><div class="bar"><i class="${mx===mn?"":v===mx?"hi":v===mn?"lo":""}" style="width:${Math.min(100,v/180*100)}%"></i></div>`).join("")}</div></section>`;
+  const abil=`<section><h2>Abilities</h2>${abis.map(A).join("")||"—"}</section>`,inn=`<section><h2>Innates</h2>${inns.map(A).join("")||"—"}</section>`;
+  const evo=into.length||from.length?`<section><h2>Evolution</h2>${from.map(x=>`<div>From ${x}</div>`).join("")}${into.map(x=>`<div>Into ${x}</div>`).join("")}</section>`:"";
+  const frm=forms.length?`<section><h2>Other forms</h2>${forms.map(f=>`<div>${lnk(f.id)}</div>`).join("")}</section>`:"";
+  const plc=places.length?`<section><details open><summary>Where to find (${places.length})</summary>${places.map(p=>`<div class="mv" style="display:block">${p}</div>`).join("")}</details></section>`:"";
+  const foot=`<section><div class="meta"><span>Egg group: ${esc(egg||"—")}</span><span>EV yield: ${st.EVY.map((v,k)=>v?v+" "+STATS[k]:"").filter(Boolean).join(", ")||"—"}</span><span>Data v${esc(D._v)}</span><span><a class="link" id="ord">Order: ${mode==="dex"?"Dex number":"Game order"} (tap to switch)</a></span></div></section>`;
+  const html=matchMedia("(min-width:1280px)").matches
+   ?`<div class="spread s4"><div class="c1">${hero}${plc}</div><div class="c2">${desc}${stats}${abil}${inn}${evo}${frm}</div><div class="mw">${bar}<div class="mc"><div>${lvl}${egm}</div><div>${tm}${tut}</div></div>${foot}</div></div>`
+   :`<div class="spread"><div class="pg l">${hero}${desc}${stats}${abil}${inn}</div><div class="pg r">${evo}${frm}${plc}${bar}${mvs}${foot}</div></div>`;
   const c1=TC[tn(types[0]??st.types[0])]||"#7a8",c2=types[1]!=null?TC[tn(types[1])]:`color-mix(in srgb,${c1} 55%,#101830)`;
   return{html,t:c1,t2:c2};
 }
@@ -336,6 +342,7 @@ document.addEventListener("click",e=>{
   $("#q").value=o.name;pin=id;fill();
   const r=$(`#vlist .row[data-i="${id}"]`);if(r)r.click();
 });
+try{matchMedia("(min-width:1280px)").addEventListener("change",()=>{if(list.length)render(cur)})}catch(e){}
 (async function boot(){
   try{await load();index();indexExtra();const h0=location.hash.slice(1),id=+h0;render(byId[id]?byId[id]._i:0);if(TABS[h0]&&h0!=="dex")setTab(h0)}
   catch(e){const web=/^https?:/.test(location.protocol);$("#page").innerHTML=`<div class="msg">${D&&list.length?"The data loaded, but a page failed to draw.":"Couldn’t load the data from the NextDex site."}<br><br>Reason: ${esc(e&&e.message||e)}<br><br>${web?"":"This file was opened straight from storage or a preview, which blocks loading data. Host it online (for example GitHub Pages) and open that address in your phone’s browser.<br><br>"}<a class="link" onclick="location.reload()">Try again</a></div>`}
