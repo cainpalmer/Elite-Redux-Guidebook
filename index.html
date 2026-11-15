@@ -222,7 +222,7 @@ function build(i,shiny){
   const plc=places.length?`<section><details open><summary>Where to find (${places.length})</summary>${places.map(p=>`<div class="mv" style="display:block">${p}</div>`).join("")}</details></section>`:"";
   const foot=`<section><div class="meta"><span>Egg group: ${esc(egg||"—")}</span><span>EV yield: ${st.EVY.map((v,k)=>v?v+" "+STATS[k]:"").filter(Boolean).join(", ")||"—"}</span><span>Data v${esc(D._v)}</span><span><a class="link" id="ord">Order: ${mode==="dex"?"Dex number":"Game order"} (tap to switch)</a></span></div></section>`;
   const html=matchMedia("(min-width:1280px)").matches
-   ?`<div class="spread s4"><div class="c1">${hero}${plc}</div><div class="c2">${desc}${stats}${abil}${inn}${evo}${frm}${foot}</div><div class="mw">${bar}<div class="mc"><div>${lvl}${egm}</div><div>${tm}${tut}</div></div></div></div>`
+   ?`<div class="spread s4"><div class="c1">${hero}${desc}${plc}</div><div class="c2">${stats}${abil}${inn}${evo}${frm}${foot}</div><div class="mw">${bar}<div class="mc"><div>${lvl}${egm}</div><div>${tm}${tut}</div></div></div></div>`
    :`<div class="spread"><div class="pg l">${hero}${desc}${stats}${abil}${inn}</div><div class="pg r">${evo}${frm}${plc}${bar}${mvs}${foot}</div></div>`;
   const c1=TC[tn(types[0]??st.types[0])]||"#7a8",c2=types[1]!=null?TC[tn(types[1])]:`color-mix(in srgb,${c1} 55%,#101830)`;
   return{html,t:c1,t2:c2};
