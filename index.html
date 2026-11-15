@@ -29,12 +29,11 @@ header input::placeholder{color:#c9d6d0}
 .leaf{position:absolute;top:var(--ly);left:var(--lx);right:var(--lx);overflow:hidden;min-height:0;transform-origin:left center;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 0 30px #0006;pointer-events:none;z-index:4}
 @media(min-width:720px){
  #stage{--lx:24px;--ly:20px;padding:20px 24px 28px}
- #page,.leaf{max-width:1100px;padding:0;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 40px #0003}
+ #page,.leaf{max-width:1100px;padding:0;border-radius:10px;box-shadow:0 10px 40px #0003}
  .leaf{left:calc(var(--lx) + (100% - 48px - min(1100px,100% - 48px))/2);right:calc(var(--lx) + (100% - 48px - min(1100px,100% - 48px))/2);top:var(--ly);padding:0;transform-origin:50% 50%}
  .spread{display:grid;grid-template-columns:1fr 1fr;min-height:70vh}
  .pg{padding-bottom:18px}
- .pg.l{box-shadow:inset -16px 0 20px -16px #0004}
- .pg.r{border-left:1px solid var(--line);box-shadow:inset 16px 0 20px -16px #0004;padding-top:2px}
+ .pg.r{padding-top:2px}
  .hero{margin:12px 12px 0;border-radius:12px}
  h1{font-size:36px}
  header{justify-content:center}header input{flex:0 1 520px}
@@ -51,7 +50,7 @@ h1{font:700 30px/1.1 "Pixelify Sans",system-ui,sans-serif;margin:12px 0 4px;colo
 .no{color:#ffffffd9;font-size:14px}
 .chips{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
 .chip{padding:2px 10px;border-radius:99px;font-weight:700;font-size:13px;color:#fff;background:color-mix(in srgb,var(--c) 80%,#000);border:2px solid #0003;text-shadow:0 1px 0 #0004}
-section{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:12px 12px 0;padding:12px 14px}
+section{background:var(--card);border-radius:14px;margin:12px 12px 0;padding:12px 14px}
 h2{font:700 17px "Pixelify Sans",system-ui,sans-serif;margin:0 0 8px}
 .desc{font-style:italic;color:var(--mute);margin:0}
 .st{display:grid;grid-template-columns:38px 36px 1fr;gap:6px 8px;align-items:center;font-size:14px}
@@ -66,7 +65,7 @@ details{margin:0}summary{cursor:pointer;font:700 17px "Pixelify Sans",system-ui,
 .num{color:var(--mute);white-space:nowrap}
 .link{color:var(--ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--t);text-underline-offset:3px;cursor:pointer}
 @media(prefers-reduced-motion:reduce){.leaf{display:none}}
-.fbar{position:sticky;top:calc(60px + env(safe-area-inset-top,0px));z-index:3;display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;margin:12px 12px 0;padding:8px 12px;font-size:14px;box-shadow:0 4px 10px -6px #0005}
+.fbar{position:sticky;top:calc(60px + env(safe-area-inset-top,0px));z-index:3;display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--card);border-radius:14px;margin:12px 12px 0;padding:8px 12px;font-size:14px;box-shadow:0 4px 10px -6px #0005}
 .fbar span{color:var(--mute);margin-right:2px}
 .fbar button{display:flex;align-items:center;gap:6px;background:none;color:var(--ink);border:2px solid var(--line);border-radius:99px;padding:4px 12px;font:inherit;font-weight:700;cursor:pointer}
 .fbar button i{width:10px;height:10px;border-radius:50%}
@@ -80,7 +79,7 @@ body:not([data-tab="dex"]) #prev,body:not([data-tab="dex"]) #next{visibility:hid
 .vbar{display:flex;gap:8px;margin-bottom:10px}
 .vbar select{flex:1;min-width:0;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;padding:0 8px}
 .cnt{color:var(--mute);font-size:13px;margin:0 2px 8px}
-.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.row{background:var(--card);border:1px solid transparent;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
 .rh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rh .num{margin-left:auto;font-size:13px}
 .row .d{color:var(--mute);font-size:14px;margin-top:2px}
 .det{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;font-size:14px;cursor:auto}
