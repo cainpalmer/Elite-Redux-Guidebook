@@ -29,7 +29,10 @@ header input::placeholder{color:#c9d6d0}
 .leaf{position:absolute;top:var(--ly);left:var(--lx);right:var(--lx);overflow:hidden;min-height:0;transform-origin:left center;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 0 30px #0006;pointer-events:none;z-index:4}
 @media(min-width:1280px){
  :root{--maxw:1760px}
- .spread.s4{grid-template-columns:minmax(0,.95fr) minmax(0,1.15fr) minmax(0,2fr);align-items:start}
+ .spread.s4{grid-template-columns:minmax(0,1.5fr) minmax(0,1.05fr) minmax(0,1.95fr);align-items:start}
+ .s4 .art{width:min(88%,420px)}
+ .s4 .views{gap:10px;margin-top:16px}.s4 .views button{max-width:104px;font-size:12px;padding:6px 2px}.s4 .views img{width:68px;height:68px}
+ .s4 h1{font-size:46px}.s4 .no{font-size:16px}.s4 .chip{font-size:15px;padding:3px 14px}
  .s4>div{padding-bottom:18px;min-width:0}
  .mc{display:grid;grid-template-columns:1fr 1fr;align-items:start}.mc>div{min-width:0}
  .mc .mv{grid-template-columns:30px 1fr}.mc .mv .num,.mc .mv small{grid-column:2}.mc .mv .num{text-align:left;margin:0}
@@ -59,7 +62,7 @@ h1{font:700 30px/1.1 "Pixelify Sans",system-ui,sans-serif;margin:12px 0 4px;colo
 .chip{padding:2px 10px;border-radius:99px;font-weight:700;font-size:13px;color:#fff;background:color-mix(in srgb,var(--c) 80%,#000);border:2px solid #0003;text-shadow:0 1px 0 #0004}
 section{background:var(--card);border-radius:14px;margin:12px 12px 0;padding:12px 14px}
 h2{font:700 17px "Pixelify Sans",system-ui,sans-serif;margin:0 0 8px}
-.desc{font-style:italic;color:var(--mute);margin:0}
+.desc{font-style:italic;font-weight:700;font-size:17.5px;line-height:1.4;color:var(--mute);margin:0}
 .st{display:grid;grid-template-columns:38px 36px 1fr;gap:6px 8px;align-items:center;font-size:14px}
 .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:#8c9b9e}.bar i.hi{background:#3fa34d}.bar i.lo{background:#d24a43}
 .ab{margin:0 0 8px}.ab b{display:block}.ab span{color:var(--mute);font-size:14px}
@@ -185,6 +188,7 @@ function evoText(kd,rs){
   k==="EVO_MEGA_EVOLUTION"?"Mega evolves with "+it(rs):k==="EVO_MOVE_MEGA_EVOLUTION"?"Mega evolves with "+mo(rs):
   k==="EVO_PRIMAL_REVERSION"?"Primal reversion":clean(k.replace("EVO_",""))+(rs?" "+clean(rs):"");
 }
+const ftIn=dm=>{let t=Math.round(dm/10*39.3701),f=Math.floor(t/12),i=t%12;return f+"′"+String(i).padStart(2,"0")+"″"};
 const mdesc=m=>/^\s*not done yet\.?\s*$/i.test(m.desc||"")?(m.lDesc||m.desc):m.desc;
 const lnk=id=>byId[id]?`<a class="link" data-go="${id}">${esc(byId[id].name)}</a>`:"?";
 
@@ -209,7 +213,7 @@ function build(i,shiny){
     <div class="views">${VN.map((n,k)=>`<button data-v="${k}" class="${k===view?"on":""}" aria-label="${n}">${sprite(s,k)}<span>${n}</span></button>`).join("")}</div>
     <h1>${esc(s.name)}</h1><div class="no">No. ${s.dex?.id||"??"} · page ${i+1} of ${list.length}</div>
     <div class="chips">${types.map(chip).join("")}</div></div>`;
-  const desc=s.dex?.desc||hw?`<section>${s.dex?.desc?`<p class="desc">${esc(s.dex.desc)}</p>`:""}${hw?`<div class="meta"><span>Height ${(hw[0]/10).toFixed(1)} m</span><span>Weight ${(hw[1]/10).toFixed(1)} kg</span></div>`:""}</section>`:"";
+  const desc=s.dex?.desc||hw?`<section>${s.dex?.desc?`<p class="desc">${esc(s.dex.desc)}</p>`:""}${hw?`<div class="meta"><span>Height ${ftIn(hw[0])}</span><span>Weight ${(hw[1]/10*2.20462).toFixed(1)} lbs</span></div>`:""}</section>`:"";
   const stats=`<section><h2>Base stats · ${bst}</h2><div class="st">${st.base.map((v,k)=>`<span>${STATS[k]}</span><b>${v}</b><div class="bar"><i class="${mx===mn?"":v===mx?"hi":v===mn?"lo":""}" style="width:${Math.min(100,v/180*100)}%"></i></div>`).join("")}</div></section>`;
   const abil=`<section><h2>Abilities</h2>${abis.map(A).join("")||"—"}</section>`,inn=`<section><h2>Innates</h2>${inns.map(A).join("")||"—"}</section>`;
   const evo=into.length||from.length?`<section><h2>Evolution</h2>${from.map(x=>`<div>From ${x}</div>`).join("")}${into.map(x=>`<div>Into ${x}</div>`).join("")}</section>`:"";
