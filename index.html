@@ -66,6 +66,12 @@ details{margin:0}summary{cursor:pointer;font:700 17px "Pixelify Sans",system-ui,
 .num{color:var(--mute);white-space:nowrap}
 .link{color:var(--ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--t);text-underline-offset:3px;cursor:pointer}
 @media(prefers-reduced-motion:reduce){.leaf{display:none}}
+.fbar{position:sticky;top:calc(60px + env(safe-area-inset-top,0px));z-index:3;display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;margin:12px 12px 0;padding:8px 12px;font-size:14px;box-shadow:0 4px 10px -6px #0005}
+.fbar span{color:var(--mute);margin-right:2px}
+.fbar button{display:flex;align-items:center;gap:6px;background:none;color:var(--ink);border:2px solid var(--line);border-radius:99px;padding:4px 12px;font:inherit;font-weight:700;cursor:pointer}
+.fbar button i{width:10px;height:10px;border-radius:50%}
+.fbar button.on{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.mv{transition:opacity .15s}.mv.dim{opacity:.35}
 .msg{padding:40px 20px;text-align:center;color:var(--mute)}
 button.sh{background:none;border:1px solid #fff9;color:#fff;border-radius:99px;padding:3px 12px;margin-top:8px;font:inherit;font-size:13px}
 </style>
@@ -82,7 +88,8 @@ button.sh{background:none;border:1px solid #fff9;color:#fff;border-radius:99px;p
 const BASES=["https://forwardfeed.github.io/ER-nextdex/static/","https://forwardfeed.github.io/ER-nextdex/","https://raw.githubusercontent.com/ForwardFeed/ER-nextdex/main/static/"];
 const FALLBACK_VERSION="2.65.5";
 const TC={Normal:"#a8a77a",Fighting:"#c22e28",Fire:"#ee8130",Ice:"#96d9d6",Electric:"#f7d02c",Bug:"#a6b91a",Flying:"#a98ff3",Steel:"#b7b7ce",Grass:"#7ac74c",Ground:"#e2bf65",Poison:"#a33ea1",Dark:"#705746",Water:"#6390f0",Psychic:"#f95587",Rock:"#b6a136",Dragon:"#6f35fc",Ghost:"#735797",Fairy:"#d685ad",Stellar:"#40b5a5",Mystery:"#68a090",None:"#889"};
-const STATS=["HP","Atk","Def","SpA","SpD","Spe"],SPLIT=["Phys","Spec","Status"];
+const STATS=["HP","Atk","Def","SpA","SpD","Spe"],SPLIT=["Phys","Spec","Status","Highest atk","Hits Def","Highest dmg","Hits SpD"],CATS=[[0],[1],[2],[0,1],[1],[0,1],[0]],FN=["Phys","Spec","Status"],FC=["#d8602f","#3f78d0","#7d8b8f"];
+const fsel=new Set();
 let mode="dex";try{mode=localStorage.getItem("order")||"dex"}catch(e){}
 let D,base,list=[],byId={},mv={},ab={},enc={},cur=0;
 const $=s=>document.querySelector(s);
@@ -106,13 +113,13 @@ async function load(){
 }
 function sortList(){list.sort(mode==="dex"?(a,b)=>(a.dex?.id||1e9)-(b.dex?.id||1e9)||a.id-b.id:(a,b)=>a.id-b.id);list.forEach((s,i)=>{s._i=i;byId[s.id]=s})}
 function index(){
-  D.moves.forEach(m=>mv[m.id]=m);D.abilities.forEach(a=>ab[a.id]=a);
+  D.moves.forEach(m=>{mv[m.id]=m;MOVE[m.NAME]=m.name});D.items.forEach(x=>ITEM[x.NAME]=x.name);D.abilities.forEach(a=>ab[a.id]=a);
   list=D.species.filter(s=>s.id>0&&s.name&&s.name!=="??????????");
   sortList();
   const kinds=["land","water","fish","honey","rock","hidden"],label={land:"Grass",water:"Surfing",fish:"Fishing",honey:"Honey tree",rock:"Rock Smash",hidden:"Hidden"};
   for(const m of (D.locations.maps||[]))for(const k in m){
     if(!Array.isArray(m[k])||!Array.isArray(m[k][0])||m[k][0].length!==3)continue;
-    for(const [lo,hi,sp] of m[k]){const sid=sp>0?D.species[sp]?.id:null;if(sid==null)continue;(enc[sid]??=new Map()).set(m.id+k,{map:D.mapsT[m.id]||"Map "+m.id,how:label[k]||k,lo:Math.min(lo,hi),hi:Math.max(lo,hi)})}
+    for(const [lo,hi,sp] of m[k]){const sid=sp>0?D.species[sp]?.id:null;if(sid==null)continue;(enc[sid]??=new Map()).set(m.id+k,{map:D.mapsT[m.id]||"Unnamed area",how:label[k]||k,lo:Math.min(lo,hi),hi:Math.max(lo,hi)})}
   }
 }
 const SUF=["","_SHINY","_BACK","_BACK_SHINY"],VN=["Front","Shiny","Back","Shiny back"];let view=0;
@@ -123,38 +130,52 @@ function sprite(s,sh){return `<img data-p="${spUrl(s,sh)}" src="${base+spUrl(s,s
 function moveRow(id,lv){
   const m=mv[id];if(!m)return"";
   const p=m.pwr?m.pwr:"—",a=m.acc?m.acc:"—";
-  return `<div class="mv"><span class="lv">${lv??""}</span><span><span class="nm">${esc(m.name)}</span>${chip(m.types[0])}</span><span class="num">${SPLIT[m.split]||""} · ${p}/${a}/${m.pp}</span><small>${esc(m.desc)}</small></div>`;
+  return `<div class="mv" data-c="${CATS[m.split]||""}"><span class="lv">${lv??""}</span><span><span class="nm">${esc(m.name)}</span>${chip(m.types[0])}</span><span class="num">${SPLIT[m.split]||""} · ${p}/${a}/${m.pp}</span><small>${esc(m.desc)}</small></div>`;
 }
 function box(title,ids,lv){
   if(!ids||!ids.length)return"";
-  return `<section><details><summary>${title} (${ids.length})</summary>${ids.map((x,i)=>moveRow(lv?x.id:x,lv?x.lv:"")).join("")}</details></section>`;
+  return `<section><details open><summary>${title} (${ids.length})</summary>${ids.map((x,i)=>moveRow(lv?x.id:x,lv?x.lv:"")).join("")}</details></section>`;
+}
+const ITEM={},MOVE={};
+function evoText(kd,rs){
+  const k=D.evoKindT[kd],it=r=>ITEM[r]||clean(r),mo=r=>MOVE[r]||clean(r);
+  return k==="EVO_LEVEL"?"Level "+rs:k==="EVO_LEVEL_MALE"?`Level ${rs} if male`:k==="EVO_LEVEL_FEMALE"?`Level ${rs} if female`:
+  k==="EVO_MEGA_EVOLUTION"?"Mega evolves with "+it(rs):k==="EVO_MOVE_MEGA_EVOLUTION"?"Mega evolves with "+mo(rs):
+  k==="EVO_PRIMAL_REVERSION"?"Primal reversion":clean(k.replace("EVO_",""))+(rs?" "+clean(rs):"");
 }
 const lnk=id=>byId[id]?`<a class="link" data-go="${id}">${esc(byId[id].name)}</a>`:"?";
 
+function applyFilter(root){
+  root.querySelectorAll(".mv[data-c]").forEach(r=>{const c=r.dataset.c.split(",").filter(Boolean).map(Number);r.classList.toggle("dim",fsel.size>0&&!c.some(x=>fsel.has(x)))});
+}
 function build(i,shiny){
   const s=list[i],st=s.stats,bst=st.base.reduce((a,b)=>a+b,0);
   const types=[...new Set(st.types)].filter(t=>tn(t)!=="None"&&tn(t)!=="Mystery");
   const abis=[...new Set(st.abis)].filter(x=>x),inns=[...new Set(st.inns)].filter(x=>x);
   const A=a=>`<div class="ab"><b>${esc(ab[a]?.name)}</b><span>${esc(ab[a]?.desc)}</span></div>`;
-  const into=s.evolutions.filter(e=>e.in>0&&D.species[e.in]).map(e=>`${lnk(D.species[e.in].id)} <span class="num">${e.kd===0?"Lv "+esc(e.rs):esc(clean(e.rs))}</span>`);
-  const from=list.filter(o=>o.evolutions.some(e=>e.in>0&&D.species[e.in]?.id===s.id)).map(o=>lnk(o.id));
+  const into=s.evolutions.filter(e=>e.in>0&&D.species[e.in]).map(e=>`${lnk(D.species[e.in].id)} <span class="num">${esc(evoText(e.kd,e.rs))}</span>`);
+  const from=[];list.forEach(o=>o.evolutions.forEach(e=>{if(e.in>0&&D.species[e.in]?.id===s.id)from.push(`${lnk(o.id)} <span class="num">${esc(evoText(e.kd,e.rs))}</span>`)}));
+  const forms=(s.forms||[]).map(x=>D.species[x]).filter(Boolean);
   const places=[...(enc[s.id]?.values()||[])].map(e=>`${esc(e.map)} <span class="num">${e.how}, Lv ${e.lo===e.hi?e.lo:e.lo+"–"+e.hi}</span>`);
-  (s.SEnc||[]).forEach(e=>places.push(`${esc(D.mapsT[e.map]||"Map "+e.map)} <span class="num">${esc(D.scriptedEncoutersHowT[e.how]||"")}</span>`));
+  (s.SEnc||[]).forEach(e=>places.push(`${esc(D.mapsT[e.map]||"Unnamed area")} <span class="num">${esc(D.scriptedEncoutersHowT[e.how]||"")}</span>`));
   const egg=st.eggG.map(g=>clean(D.eggT[g]||"").replace("egg group ","")).join(", ");
   const hw=s.dex?.hw;
+  const mvs=box("Level-up moves",s.levelUpMoves,1)+box("Egg moves",s.eggMoves)+box("TM / HM moves",s.TMHMMoves)+box("Tutor moves",s.tutor);
+  const bar=mvs?`<div class="fbar"><span>Highlight</span>${FN.map((n,k)=>`<button data-f="${k}" class="${fsel.has(k)?"on":""}" aria-pressed="${fsel.has(k)}"><i style="background:${FC[k]}"></i>${n}</button>`).join("")}</div>`:"";
   const html=`<div class="spread"><div class="pg l">
   <div class="hero"><div class="art" id="art">${sprite(s,view)}</div>
     <div class="views">${VN.map((n,k)=>`<button data-v="${k}" class="${k===view?"on":""}" aria-label="${n}">${sprite(s,k)}<span>${n}</span></button>`).join("")}</div>
     <h1>${esc(s.name)}</h1><div class="no">No. ${s.dex?.id||"??"} · page ${i+1} of ${list.length}</div>
     <div class="chips">${types.map(chip).join("")}</div></div>
-  ${s.dex?.desc?`<section><p class="desc">${esc(s.dex.desc)}</p>${hw?`<div class="meta"><span>Height ${(hw[0]/10).toFixed(1)} m</span><span>Weight ${(hw[1]/10).toFixed(1)} kg</span></div>`:""}</section>`:""}
+  ${s.dex?.desc||hw?`<section>${s.dex?.desc?`<p class="desc">${esc(s.dex.desc)}</p>`:""}${hw?`<div class="meta"><span>Height ${(hw[0]/10).toFixed(1)} m</span><span>Weight ${(hw[1]/10).toFixed(1)} kg</span></div>`:""}</section>`:""}
   <section><h2>Base stats · ${bst}</h2><div class="st">${st.base.map((v,k)=>`<span>${STATS[k]}</span><b>${v}</b><div class="bar"><i style="width:${Math.min(100,v/180*100)}%"></i></div>`).join("")}</div></section>
   <section><h2>Abilities</h2>${abis.map(A).join("")||"—"}</section>
   <section><h2>Innates</h2>${inns.map(A).join("")||"—"}</section></div>
   <div class="pg r">
-  ${into.length||from.length?`<section><h2>Evolution</h2>${from.length?`<div>From ${from.join(", ")}</div>`:""}${into.map(x=>`<div>Into ${x}</div>`).join("")}</section>`:""}
-  ${places.length?`<section><details><summary>Where to find (${places.length})</summary>${places.map(p=>`<div class="mv" style="display:block">${p}</div>`).join("")}</details></section>`:""}
-  ${box("Level-up moves",s.levelUpMoves,1)}${box("Egg moves",s.eggMoves)}${box("TM / HM moves",s.TMHMMoves)}${box("Tutor moves",s.tutor)}
+  ${into.length||from.length?`<section><h2>Evolution</h2>${from.map(x=>`<div>From ${x}</div>`).join("")}${into.map(x=>`<div>Into ${x}</div>`).join("")}</section>`:""}
+  ${forms.length?`<section><h2>Other forms</h2>${forms.map(f=>`<div>${lnk(f.id)}</div>`).join("")}</section>`:""}
+  ${places.length?`<section><details open><summary>Where to find (${places.length})</summary>${places.map(p=>`<div class="mv" style="display:block">${p}</div>`).join("")}</details></section>`:""}
+  ${bar}${mvs}
   <section><div class="meta"><span>Egg group: ${esc(egg||"—")}</span><span>EV yield: ${st.EVY.map((v,k)=>v?v+" "+STATS[k]:"").filter(Boolean).join(", ")||"—"}</span><span>Data v${esc(D._v)}</span><span><a class="link" id="ord">Order: ${mode==="dex"?"Dex number":"Game order"} (tap to switch)</a></span></div></section></div></div>`;
   const c1=TC[tn(types[0]??st.types[0])]||"#7a8",c2=types[1]!=null?TC[tn(types[1])]:`color-mix(in srgb,${c1} 55%,#101830)`;
   return{html,t:c1,t2:c2};
@@ -167,14 +188,16 @@ function render(i,shiny,flip){
   const anim=flip&&i!==old&&page.firstElementChild&&!matchMedia("(prefers-reduced-motion:reduce)").matches;
   stage.querySelectorAll(".leaf").forEach(l=>l.remove());
   cur=i;try{history.replaceState(null,"","#"+list[i].id)}catch(e){}
-  const apply=()=>{page.innerHTML=b.html;root.style.setProperty("--t",b.t);root.style.setProperty("--t2",b.t2);const vb=page.querySelectorAll(".views button");vb.forEach(bt=>bt.onclick=()=>{view=+bt.dataset.v;page.querySelector("#art").innerHTML=sprite(list[cur],view);vb.forEach(x=>x.classList.toggle("on",x===bt))});
+  const apply=()=>{page.innerHTML=b.html;root.style.setProperty("--t",b.t);root.style.setProperty("--t2",b.t2);applyFilter(page);
+    const fb2=page.querySelectorAll(".fbar button");fb2.forEach(bt=>bt.onclick=()=>{const k=+bt.dataset.f;fsel.has(k)?fsel.delete(k):fsel.add(k);fb2.forEach(x=>{const on=fsel.has(+x.dataset.f);x.classList.toggle("on",on);x.setAttribute("aria-pressed",on)});applyFilter(page)});
+    const vb=page.querySelectorAll(".views button");vb.forEach(bt=>bt.onclick=()=>{view=+bt.dataset.v;page.querySelector("#art").innerHTML=sprite(list[cur],view);vb.forEach(x=>x.classList.toggle("on",x===bt))});
     const o=page.querySelector("#ord");if(o)o.onclick=()=>{mode=mode==="dex"?"game":"dex";try{localStorage.setItem("order",mode)}catch(e){}const id=list[cur].id;sortList();render(byId[id]._i)}};
   scrollTo(0,0);
   if(!anim){apply();return}
   const leaf=document.createElement("div");leaf.className="leaf";
   leaf.style.height=Math.min(page.offsetHeight,innerHeight-70)+"px";
   leaf.style.setProperty("--t",dir>0?oldT:b.t);leaf.style.setProperty("--t2",dir>0?oldT2:b.t2);
-  if(dir>0){leaf.innerHTML=page.innerHTML;apply()}else leaf.innerHTML=b.html;
+  if(dir>0){leaf.innerHTML=page.innerHTML;apply()}else{leaf.innerHTML=b.html;applyFilter(leaf)}
   if(wide)leaf.style.clipPath=dir>0?"inset(0 0 0 50%)":"inset(0 50% 0 0)";
   stage.appendChild(leaf);
   const ang=wide&&dir<0?120:-120,dim="brightness(.72)";
@@ -185,7 +208,7 @@ function render(i,shiny,flip){
   an.onfinish=done;setTimeout(done,1000);
 }
 const go=id=>byId[id]&&render(byId[id]._i,false,true);
-document.addEventListener("click",e=>{const a=e.target.closest("[data-go]");if(a){e.preventDefault();$("#res").style.display="none";go(+a.dataset.go)}});
+document.addEventListener("click",e=>{const a=e.target.closest("[data-go]");if(a){e.preventDefault();$("#res").style.display="none";$("#q").value="";$("#q").blur();go(+a.dataset.go)}});
 $("#prev").onclick=()=>render(cur-1,false,true);$("#next").onclick=()=>render(cur+1,false,true);
 addEventListener("keydown",e=>{if(e.target.tagName==="INPUT")return;if(e.key==="ArrowLeft")render(cur-1,false,true);if(e.key==="ArrowRight")render(cur+1,false,true)});
 let x0,y0;
