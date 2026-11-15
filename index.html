@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16252b">
+<title>ER Pocket Dex</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#e6ece7;--ink:#16252b;--mute:#566a6f;--card:#f6f9f6;--line:#c4d0c8;--t:#7a8;--bar:#16252b;--barink:#f2f7f3}
+@media(prefers-color-scheme:dark){:root{--paper:#0f1719;--ink:#e6efe9;--mute:#9bacaa;--card:#182327;--line:#2a3a3e}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:16px/1.45 "Atkinson Hyperlegible",system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom,0)}
+header{position:sticky;top:0;z-index:5;background:var(--bar);color:var(--barink);padding:calc(8px + env(safe-area-inset-top,0)) 10px 8px;display:flex;gap:8px;align-items:center}
+header button{background:#ffffff1f;border:0;color:inherit;font-size:22px;width:44px;height:44px;border-radius:10px}
+header input{flex:1;min-width:0;height:44px;border-radius:10px;border:0;padding:0 12px;font:inherit;background:#ffffff26;color:inherit}
+header input::placeholder{color:#c9d6d0}
+#res{position:fixed;left:0;right:0;top:calc(60px + env(safe-area-inset-top,0));max-height:60vh;overflow:auto;background:var(--card);border-bottom:2px solid var(--line);z-index:6;display:none}
+#res a{display:flex;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+#res img{width:40px;height:40px;image-rendering:pixelated}
+main{max-width:600px;margin:0 auto;padding:0 0 40px;min-height:80vh;touch-action:pan-y}
+.hero{background:linear-gradient(180deg,var(--t),color-mix(in srgb,var(--t) 55%,var(--paper)));padding:18px 16px 14px;text-align:center}
+.art{width:min(62vw,240px);aspect-ratio:1;margin:0 auto;display:grid;place-items:center;background:#ffffff40;border-radius:50%;border:3px solid #00000026}
+.art img{width:86%;height:86%;image-rendering:pixelated;object-fit:contain}
+h1{font:700 30px/1.1 "Pixelify Sans",system-ui,sans-serif;margin:12px 0 4px;color:#fff;text-shadow:0 2px 0 #0003}
+.no{color:#ffffffd9;font-size:14px}
+.chips{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.chip{padding:2px 10px;border-radius:99px;font-weight:700;font-size:13px;color:#fff;background:var(--c);border:2px solid #0003;text-shadow:0 1px 0 #0004}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:12px 12px 0;padding:12px 14px}
+h2{font:700 17px "Pixelify Sans",system-ui,sans-serif;margin:0 0 8px}
+.desc{font-style:italic;color:var(--mute);margin:0}
+.st{display:grid;grid-template-columns:38px 36px 1fr;gap:6px 8px;align-items:center;font-size:14px}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--t)}
+.ab{margin:0 0 8px}.ab b{display:block}.ab span{color:var(--mute);font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--mute);margin-top:8px}
+details{margin:0}summary{cursor:pointer;font:700 17px "Pixelify Sans",system-ui,sans-serif;padding:2px 0}
+.mv{display:grid;grid-template-columns:34px 1fr auto;gap:2px 8px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.mv .lv{color:var(--mute);text-align:right;font-weight:700}
+.mv .nm{font-weight:700}.mv small{grid-column:2/4;color:var(--mute)}
+.mv .chip{font-size:11px;padding:0 7px;margin-left:6px}
+.num{color:var(--mute);white-space:nowrap}
+.link{color:var(--ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--t);text-underline-offset:3px;cursor:pointer}
+.msg{padding:40px 20px;text-align:center;color:var(--mute)}
+button.sh{background:none;border:1px solid #fff9;color:#fff;border-radius:99px;padding:3px 12px;margin-top:8px;font:inherit;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <button id="prev" aria-label="Previous page">‹</button>
+  <input id="q" type="search" placeholder="Search a Pokémon" autocomplete="off" aria-label="Search">
+  <button id="next" aria-label="Next page">›</button>
+</header>
+<div id="res"></div>
+<main id="page"><div class="msg">Opening the book…</div></main>
+<script>
+const BASES=["https://forwardfeed.github.io/ER-nextdex/static/","https://forwardfeed.github.io/ER-nextdex/","https://raw.githubusercontent.com/ForwardFeed/ER-nextdex/main/static/"];
+const FALLBACK_VERSION="2.65.5";
+const TC={Normal:"#8a8a78",Fighting:"#b8362a",Fire:"#e8681f",Ice:"#4fb8c4",Electric:"#c99a05",Bug:"#8a9a14",Flying:"#6f86d6",Steel:"#7a8ea0",Grass:"#3f9a3c",Ground:"#b8923a",Poison:"#9a3fa8",Dark:"#5a463a",Water:"#2f7fd0",Psychic:"#d8407a",Rock:"#9a8438",Dragon:"#5a3fd0",Ghost:"#6a4a8e",Fairy:"#d070a8",Stellar:"#3a9aa0",Mystery:"#668",None:"#889"};
+const STATS=["HP","Atk","Def","SpA","SpD","Spe"],SPLIT=["Phys","Spec","Status"];
+let D,base,list=[],byId={},mv={},ab={},enc={},cur=0;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tn=i=>D.typeT[i]??"?";
+const chip=i=>`<span class="chip" style="--c:${TC[tn(i)]||"#889"}">${esc(tn(i))}</span>`;
+const clean=s=>String(s).replace(/^(ITEM_|SPECIES_|MOVE_)/,"").toLowerCase().replace(/_/g," ");
+
+async function getText(u){const r=await fetch(u,{cache:"no-cache"});if(!r.ok)throw new Error(r.status);return r}
+async function load(){
+  let lastErr;
+  for(const b of BASES){
+    try{
+      let v=FALLBACK_VERSION;
+      try{const t=await(await getText(b+"js/data_version.js")).text();const m=t.match(/allVersions\s*=\s*\[([^\]]*)\]/);if(m){const a=[...m[1].matchAll(/"([^"]+)"/g)].map(x=>x[1]);if(a.length)v=a[a.length-1]}}catch(e){}
+      D=await(await getText(`${b}js/data/gameDataV${v}.json`)).json();
+      base=b;D._v=v;return;
+    }catch(e){lastErr=e}
+  }
+  throw lastErr||new Error("no data");
+}
+function index(){
+  D.moves.forEach(m=>mv[m.id]=m);D.abilities.forEach(a=>ab[a.id]=a);
+  list=D.species.filter(s=>s.id>0&&s.name&&s.name!=="??????????");
+  list.forEach((s,i)=>{s._i=i;byId[s.id]=s});
+  const kinds=["land","water","fish","honey","rock","hidden"],label={land:"Grass",water:"Surfing",fish:"Fishing",honey:"Honey tree",rock:"Rock Smash",hidden:"Hidden"};
+  for(const m of (D.locations.maps||[]))for(const k in m){
+    if(!Array.isArray(m[k])||!Array.isArray(m[k][0])||m[k][0].length!==3)continue;
+    for(const [lo,hi,sp] of m[k]){(enc[sp]??=new Map()).set(m.id+k,{map:D.mapsT[m.id]||"Map "+m.id,how:label[k]||k,lo:Math.min(lo,hi),hi:Math.max(lo,hi)})}
+  }
+}
+const spUrl=(s,sh)=>"sprites/"+s.NAME.replace(/^SPECIES_/,"")+(sh?"_SHINY":"")+".png";
+window.fb=function(img,n){const b=BASES.indexOf(base);n=n||0;const next=BASES.filter(x=>x!==base)[n];if(!next){img.style.display="none";return}img.onerror=()=>fb(img,n+1);img.src=next+img.dataset.p};
+function sprite(s,sh){return `<img data-p="${spUrl(s,sh)}" src="${base+spUrl(s,sh)}" alt="${esc(s.name)} sprite" onerror="fb(this)">`}
+
+function moveRow(id,lv){
+  const m=mv[id];if(!m)return"";
+  const p=m.pwr?m.pwr:"—",a=m.acc?m.acc:"—";
+  return `<div class="mv"><span class="lv">${lv??""}</span><span><span class="nm">${esc(m.name)}</span>${chip(m.types[0])}</span><span class="num">${SPLIT[m.split]||""} · ${p}/${a}/${m.pp}</span><small>${esc(m.desc)}</small></div>`;
+}
+function box(title,ids,lv){
+  if(!ids||!ids.length)return"";
+  return `<section><details><summary>${title} (${ids.length})</summary>${ids.map((x,i)=>moveRow(lv?x.id:x,lv?x.lv:"")).join("")}</details></section>`;
+}
+const lnk=id=>byId[id]?`<a class="link" data-go="${id}">${esc(byId[id].name)}</a>`:"?";
+
+function render(i,shiny){
+  cur=Math.max(0,Math.min(list.length-1,i));const s=list[cur],st=s.stats;
+  const t0=tn(st.types[0]);document.documentElement.style.setProperty("--t",TC[t0]||"#7a8");
+  try{history.replaceState(null,"","#"+s.id)}catch(e){}
+  const bst=st.base.reduce((a,b)=>a+b,0);
+  const types=[...new Set(st.types)].filter(t=>tn(t)!=="None"&&tn(t)!=="Mystery");
+  const abis=[...new Set(st.abis)].filter(x=>x),inns=[...new Set(st.inns)].filter(x=>x);
+  const A=a=>`<div class="ab"><b>${esc(ab[a]?.name)}</b><span>${esc(ab[a]?.desc)}</span></div>`;
+  const into=s.evolutions.map(e=>`${lnk(e.in)} <span class="num">${e.kd===0?"Lv "+esc(e.rs):esc(clean(e.rs))}</span>`);
+  const from=list.filter(o=>o.evolutions.some(e=>e.in===s.id)).map(o=>lnk(o.id));
+  const places=[...(enc[s.id]?.values()||[])].map(e=>`${esc(e.map)} <span class="num">${e.how}, Lv ${e.lo===e.hi?e.lo:e.lo+"–"+e.hi}</span>`);
+  (s.SEnc||[]).forEach(e=>places.push(`${esc(D.mapsT[e.map]||"Map "+e.map)} <span class="num">${esc(D.scriptedEncoutersHowT[e.how]||"")}</span>`));
+  const egg=st.eggG.map(g=>clean(D.eggT[g]||"").replace("egg group ","")).join(", ");
+  const hw=s.dex?.hw;
+  $("#page").innerHTML=`
+  <div class="hero"><div class="art">${sprite(s,shiny)}</div>
+    <h1>${esc(s.name)}</h1><div class="no">No. ${s.id} · page ${cur+1} of ${list.length}</div>
+    <div class="chips">${types.map(chip).join("")}</div>
+    <button class="sh" id="shiny">${shiny?"Normal colors":"Shiny colors"}</button></div>
+  ${s.dex?.desc?`<section><p class="desc">${esc(s.dex.desc)}</p>${hw?`<div class="meta"><span>Height ${(hw[0]/10).toFixed(1)} m</span><span>Weight ${(hw[1]/10).toFixed(1)} kg</span></div>`:""}</section>`:""}
+  <section><h2>Base stats · ${bst}</h2><div class="st">${st.base.map((v,k)=>`<span>${STATS[k]}</span><b>${v}</b><div class="bar"><i style="width:${Math.min(100,v/180*100)}%"></i></div>`).join("")}</div></section>
+  <section><h2>Abilities</h2>${abis.map(A).join("")||"—"}</section>
+  <section><h2>Innates</h2>${inns.map(A).join("")||"—"}</section>
+  ${into.length||from.length?`<section><h2>Evolution</h2>${from.length?`<div>From ${from.join(", ")}</div>`:""}${into.map(x=>`<div>Into ${x}</div>`).join("")}</section>`:""}
+  ${places.length?`<section><details><summary>Where to find (${places.length})</summary>${places.map(p=>`<div class="mv" style="display:block">${p}</div>`).join("")}</details></section>`:""}
+  ${box("Level-up moves",s.levelUpMoves,1)}${box("Egg moves",s.eggMoves)}${box("TM / HM moves",s.TMHMMoves)}${box("Tutor moves",s.tutor)}
+  <section><div class="meta"><span>Egg group: ${esc(egg||"—")}</span><span>EV yield: ${st.EVY.map((v,k)=>v?v+" "+STATS[k]:"").filter(Boolean).join(", ")||"—"}</span><span>Data v${esc(D._v)}</span></div></section>`;
+  $("#shiny").onclick=()=>render(cur,!shiny);
+  scrollTo(0,0);
+}
+const go=id=>byId[id]&&render(byId[id]._i);
+document.addEventListener("click",e=>{const a=e.target.closest("[data-go]");if(a){e.preventDefault();$("#res").style.display="none";go(+a.dataset.go)}});
+$("#prev").onclick=()=>render(cur-1);$("#next").onclick=()=>render(cur+1);
+addEventListener("keydown",e=>{if(e.target.tagName==="INPUT")return;if(e.key==="ArrowLeft")render(cur-1);if(e.key==="ArrowRight")render(cur+1)});
+let x0,y0;
+$("#page").addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+$("#page").addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)>70&&Math.abs(dx)>2*Math.abs(dy))render(cur+(dx<0?1:-1))},{passive:true});
+$("#q").addEventListener("input",e=>{
+  const q=e.target.value.trim().toLowerCase(),r=$("#res");
+  if(!q||!list.length){r.style.display="none";return}
+  const hits=list.filter(s=>s.name.toLowerCase().includes(q)||String(s.id)===q).slice(0,40);
+  r.innerHTML=hits.map(s=>`<a href="#${s.id}" data-go="${s.id}">${sprite(s)}<span><b>${esc(s.name)}</b> <span class="num">No. ${s.id}</span></span></a>`).join("")||`<div class="msg">No Pokémon matches “${esc(q)}”.</div>`;
+  r.style.display="block";
+});
+addEventListener("hashchange",()=>{const id=+location.hash.slice(1);if(id&&list.length&&byId[id]&&list[cur]?.id!==id)go(id)});
+(async function boot(){
+  try{await load();index();const id=+location.hash.slice(1);render(byId[id]?byId[id]._i:0)}
+  catch(e){const web=/^https?:/.test(location.protocol);$("#page").innerHTML=`<div class="msg">${D&&list.length?"The data loaded, but a page failed to draw.":"Couldn’t load the data from the NextDex site."}<br><br>Reason: ${esc(e&&e.message||e)}<br><br>${web?"":"This file was opened straight from storage or a preview, which blocks loading data. Host it online (for example GitHub Pages) and open that address in your phone’s browser.<br><br>"}<a class="link" onclick="location.reload()">Try again</a></div>`}
+})();
+</script>
+</body>
+</html>
