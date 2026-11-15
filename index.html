@@ -16,7 +16,7 @@
 @media(prefers-color-scheme:dark){:root{--paper:#0f1719;--ink:#e6efe9;--mute:#9bacaa;--card:#182327;--line:#2a3a3e}}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--paper);color:var(--ink);font:16px/1.45 "Atkinson Hyperlegible",system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom,0)}
+body{background:var(--paper);color:var(--ink);font:16px/1.45 "Atkinson Hyperlegible",system-ui,sans-serif;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
 header{position:sticky;top:0;z-index:5;background:var(--bar);color:var(--barink);padding:calc(8px + env(safe-area-inset-top,0)) 10px 8px;display:flex;gap:8px;align-items:center}
 header button{background:#ffffff1f;border:0;color:inherit;font-size:22px;width:44px;height:44px;border-radius:10px}
 header input{flex:1;min-width:0;height:44px;border-radius:10px;border:0;padding:0 12px;font:inherit;background:#ffffff26;color:inherit}
@@ -72,6 +72,21 @@ details{margin:0}summary{cursor:pointer;font:700 17px "Pixelify Sans",system-ui,
 .fbar button i{width:10px;height:10px;border-radius:50%}
 .fbar button.on{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)}
 .mv{transition:opacity .15s}.mv.dim{opacity:.35}
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:7;display:flex;background:var(--bar);padding-bottom:env(safe-area-inset-bottom,0px)}
+#tabs button{flex:1;height:54px;background:none;border:0;border-top:3px solid transparent;color:#b9c9c2;font:700 13px "Atkinson Hyperlegible",system-ui,sans-serif}
+#tabs button.on{color:#fff;border-top-color:var(--t)}
+body:not([data-tab="dex"]) #prev,body:not([data-tab="dex"]) #next{visibility:hidden}
+#other{max-width:720px;margin:0 auto;padding:12px 12px 24px}
+.vbar{display:flex;gap:8px;margin-bottom:10px}
+.vbar select{flex:1;min-width:0;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;padding:0 8px}
+.cnt{color:var(--mute);font-size:13px;margin:0 2px 8px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.rh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rh .num{margin-left:auto;font-size:13px}
+.row .d{color:var(--mute);font-size:14px;margin-top:2px}
+.det{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;font-size:14px;cursor:auto}
+.det p{margin:6px 0}.row.open .det{display:block}.row.open{border-color:var(--t)}
+.chips2{display:flex;flex-wrap:wrap;gap:4px 14px;max-height:260px;overflow:auto}
+.more{display:block;width:100%;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:700}
 .msg{padding:40px 20px;text-align:center;color:var(--mute)}
 button.sh{background:none;border:1px solid #fff9;color:#fff;border-radius:99px;padding:3px 12px;margin-top:8px;font:inherit;font-size:13px}
 </style>
@@ -84,6 +99,8 @@ button.sh{background:none;border:1px solid #fff9;color:#fff;border-radius:99px;p
 </header>
 <div id="res"></div>
 <div id="stage"><main id="page"><div class="msg">Opening the book…</div></main></div>
+<div id="other" hidden></div>
+<nav id="tabs" aria-label="Sections"><button data-t="dex" class="on">Pokédex</button><button data-t="abilities">Abilities</button><button data-t="moves">Moves</button><button data-t="locations">Locations</button></nav>
 <script>
 const BASES=["https://forwardfeed.github.io/ER-nextdex/static/","https://forwardfeed.github.io/ER-nextdex/","https://raw.githubusercontent.com/ForwardFeed/ER-nextdex/main/static/"];
 const FALLBACK_VERSION="2.65.5";
@@ -218,22 +235,92 @@ function render(i,shiny,flip){
   an.onfinish=done;setTimeout(done,1000);
 }
 const go=id=>byId[id]&&render(byId[id]._i,false,true);
-document.addEventListener("click",e=>{const a=e.target.closest("[data-go]");if(a){e.preventDefault();$("#res").style.display="none";$("#q").value="";$("#q").blur();go(+a.dataset.go)}});
+document.addEventListener("click",e=>{const a=e.target.closest("[data-go]");if(a){e.preventDefault();$("#res").style.display="none";$("#q").blur();setTab("dex");go(+a.dataset.go)}});
 $("#prev").onclick=()=>render(cur-1,false,true);$("#next").onclick=()=>render(cur+1,false,true);
-addEventListener("keydown",e=>{if(e.target.tagName==="INPUT")return;if(e.key==="ArrowLeft")render(cur-1,false,true);if(e.key==="ArrowRight")render(cur+1,false,true)});
+addEventListener("keydown",e=>{if(e.target.tagName==="INPUT"||tab!=="dex")return;if(e.key==="ArrowLeft")render(cur-1,false,true);if(e.key==="ArrowRight")render(cur+1,false,true)});
 let x0,y0;
 $("#page").addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
 $("#page").addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)>70&&Math.abs(dx)>2*Math.abs(dy))render(cur+(dx<0?1:-1),false,true)},{passive:true});
 $("#q").addEventListener("input",e=>{
-  const q=e.target.value.trim().toLowerCase(),r=$("#res");
+  const q=e.target.value.trim().toLowerCase(),r=$("#res");if(tab!=="dex"){lim=60;fill();return}
   if(!q||!list.length){r.style.display="none";return}
   const hits=list.filter(s=>s.name.toLowerCase().includes(q)||String(s.dex?.id)===q).slice(0,40);
   r.innerHTML=hits.map(s=>`<a href="#${s.id}" data-go="${s.id}">${sprite(s)}<span><b>${esc(s.name)}</b> <span class="num">No. ${s.dex?.id||"??"}</span></span></a>`).join("")||`<div class="msg">No Pokémon matches “${esc(q)}”.</div>`;
   r.style.display="block";
 });
-addEventListener("hashchange",()=>{const id=+location.hash.slice(1);if(id&&list.length&&byId[id]&&list[cur]?.id!==id)go(id)});
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!=="dex"){if(tab!==h)setTab(h);return}if(+h&&tab!=="dex")setTab("dex");const id=+location.hash.slice(1);if(id&&list.length&&byId[id]&&list[cur]?.id!==id)go(id)});
+
+/* ---- Abilities / Moves / Locations ---- */
+let tab="dex",lim=60,ABL=[],MVL=[],LCL=[];const abN={};
+const TABS={dex:"Search a Pokémon",abilities:"Search abilities",moves:"Search moves",locations:"Search places or Pokémon"};
+function indexExtra(){
+  const label={land:"Grass",water:"Surfing",fish:"Fishing",honey:"Honey tree",rock:"Rock Smash",hidden:"Hidden"};
+  list.forEach(s=>new Set([...s.stats.abis,...s.stats.inns]).forEach(a=>abN[a]=(abN[a]||0)+1));
+  const byName=(a,b)=>a.a.name.localeCompare(b.a.name);
+  ABL=D.abilities.filter(a=>a.id>0&&a.name&&!/^-+$/.test(a.name)).map(a=>({a,t:(a.name+" "+a.desc).toLowerCase()})).sort(byName);
+  MVL=D.moves.filter(m=>m.name&&!/^-+$/.test(m.name)).map(m=>({a:m,t:(m.name+" "+m.desc).toLowerCase()})).sort(byName);
+  LCL=(D.locations.maps||[]).map(m=>{
+    const meth=[];
+    for(const k in m){
+      if(!Array.isArray(m[k])||!Array.isArray(m[k][0])||m[k][0].length!==3)continue;
+      const mp=new Map();
+      for(const [lo,hi,sp] of m[k]){const sc=sp>0?D.species[sp]:null;if(!sc)continue;const o=mp.get(sc.id)||{lo:999,hi:0,s:sc};o.lo=Math.min(o.lo,lo,hi);o.hi=Math.max(o.hi,lo,hi);mp.set(sc.id,o)}
+      if(mp.size)meth.push([label[k]||k,[...mp.values()]]);
+    }
+    const name=D.mapsT[m.id]||"Unnamed area";
+    return{id:m.id,name,meth,n:new Set(meth.flatMap(x=>x[1].map(o=>o.s.id))).size,t:(name+" "+meth.map(x=>x[1].map(o=>o.s.name).join(" ")).join(" ")).toLowerCase()};
+  }).filter(l=>l.meth.length);
+}
+function setTab(t){
+  tab=t;document.body.dataset.tab=t;lim=60;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  $("#stage").hidden=t!=="dex";$("#other").hidden=t==="dex";
+  const q=$("#q");q.value="";q.placeholder=TABS[t];$("#res").style.display="none";
+  try{history.replaceState(null,"","#"+(t==="dex"?list[cur].id:t))}catch(e){}
+  if(t!=="dex"){
+    $("#other").innerHTML=(t==="moves"?`<div class="vbar"><select id="ft" aria-label="Type"><option value="">All types</option>${D.typeT.map((n,i)=>n!=="None"&&n!=="Mystery"?`<option value="${i}">${n}</option>`:"").join("")}</select><select id="fc" aria-label="Category"><option value="">All categories</option><option value="0">Physical</option><option value="1">Special</option><option value="2">Status</option></select></div>`:"")+'<div id="vlist"></div>';
+    fill();
+  }
+  scrollTo(0,0);
+}
+function fill(){
+  const box=$("#vlist");if(!box)return;
+  const q=$("#q").value.trim().toLowerCase();let all,row;
+  if(tab==="abilities"){
+    all=ABL.filter(x=>!q||x.t.includes(q));
+    row=({a})=>`<div class="row" data-k="ab" data-i="${a.id}"><div class="rh"><b>${esc(a.name)}</b><span class="num">${abN[a.id]||0} Pokémon</span></div><div class="d">${esc(a.desc)}</div><div class="det"></div></div>`;
+  }else if(tab==="moves"){
+    const ft=$("#ft")?.value,fc=$("#fc")?.value;
+    all=MVL.filter(x=>(!q||x.t.includes(q))&&(!ft||x.a.types.includes(+ft))&&(!fc||(CATS[x.a.split]||[]).includes(+fc)));
+    row=({a:m})=>`<div class="row" data-k="mv" data-i="${m.id}"><div class="rh"><b>${esc(m.name)}</b>${chip(m.types[0])}<span class="num">${SPLIT[m.split]||""} · ${m.pwr||"—"}/${m.acc||"—"}/${m.pp}</span></div><div class="d">${esc(m.desc)}</div><div class="det"></div></div>`;
+  }else{
+    all=LCL.filter(x=>!q||x.t.includes(q));
+    row=l=>`<div class="row" data-k="lc" data-i="${l.id}"><div class="rh"><b>${esc(l.name)}</b><span class="num">${l.n} Pokémon</span></div><div class="det"></div></div>`;
+  }
+  if(q){const nm=x=>(x.a?x.a.name:x.name).toLowerCase().includes(q);all=[...all.filter(nm),...all.filter(x=>!nm(x))]}
+  box.innerHTML=`<div class="cnt">${all.length} result${all.length===1?"":"s"}</div>`+(all.length?all.slice(0,lim).map(row).join(""):'<div class="msg">No matches.</div>')+(all.length>lim?'<button class="more">Show more</button>':"");
+}
+const chipsOf=(arr,cap=150)=>`<div class="chips2">${arr.slice(0,cap).map(s=>lnk(s.id)).join("")}</div>${arr.length>cap?`<div class="num">and ${arr.length-cap} more</div>`:""}`;
+function detail(k,i){
+  if(k==="ab"){const A=list.filter(s=>s.stats.abis.includes(i)),I=list.filter(s=>s.stats.inns.includes(i));
+    return `<p><b>Ability of ${A.length}</b></p>${chipsOf(A)}<p><b>Innate of ${I.length}</b></p>${chipsOf(I)}`}
+  if(k==="mv"){const m=mv[i],L=list.filter(s=>s.levelUpMoves.some(x=>x.id===i)||s.eggMoves.includes(i)||s.tutor.includes(i)||s.TMHMMoves.includes(i));
+    const info=[m.prio?`Priority ${m.prio>0?"+":""}${m.prio}`:"",D.targetT[m.target]?"Target: "+clean(D.targetT[m.target]):"",m.chance?`${m.chance}% effect chance`:"",...(m.flags||[]).map(f=>D.flagsT[f])].filter(Boolean);
+    return `<p>${esc(m.lDesc||m.desc)}</p><p class="num">${esc(info.join(" · "))}</p><p><b>Learned by ${L.length}</b></p>${chipsOf(L)}`}
+  const l=LCL.find(x=>x.id===i);
+  return l.meth.map(([n,arr])=>`<p><b>${esc(n)}</b></p><div class="chips2">${arr.map(o=>`<span>${lnk(o.s.id)} <span class="num">Lv ${o.lo===o.hi?o.lo:o.lo+"–"+o.hi}</span></span>`).join("")}</div>`).join("");
+}
+$("#other").addEventListener("click",e=>{
+  if(e.target.closest("a"))return;
+  if(e.target.closest(".more")){lim+=60;fill();return}
+  const r=e.target.closest(".row");if(!r||e.target.closest(".det"))return;
+  r.classList.toggle("open");const dt=r.querySelector(".det");
+  if(!dt.dataset.done){dt.dataset.done=1;dt.innerHTML=detail(r.dataset.k,+r.dataset.i)}
+});
+$("#other").addEventListener("change",e=>{if(e.target.matches("select")){lim=60;fill()}});
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 (async function boot(){
-  try{await load();index();const id=+location.hash.slice(1);render(byId[id]?byId[id]._i:0)}
+  try{await load();index();indexExtra();const h0=location.hash.slice(1),id=+h0;render(byId[id]?byId[id]._i:0);if(TABS[h0]&&h0!=="dex")setTab(h0)}
   catch(e){const web=/^https?:/.test(location.protocol);$("#page").innerHTML=`<div class="msg">${D&&list.length?"The data loaded, but a page failed to draw.":"Couldn’t load the data from the NextDex site."}<br><br>Reason: ${esc(e&&e.message||e)}<br><br>${web?"":"This file was opened straight from storage or a preview, which blocks loading data. Host it online (for example GitHub Pages) and open that address in your phone’s browser.<br><br>"}<a class="link" onclick="location.reload()">Try again</a></div>`}
 })();
 </script>
