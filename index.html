@@ -55,7 +55,7 @@ section{background:var(--card);border:1px solid var(--line);border-radius:14px;m
 h2{font:700 17px "Pixelify Sans",system-ui,sans-serif;margin:0 0 8px}
 .desc{font-style:italic;color:var(--mute);margin:0}
 .st{display:grid;grid-template-columns:38px 36px 1fr;gap:6px 8px;align-items:center;font-size:14px}
-.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--t)}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:#8c9b9e}.bar i.hi{background:#3fa34d}.bar i.lo{background:#d24a43}
 .ab{margin:0 0 8px}.ab b{display:block}.ab span{color:var(--mute);font-size:14px}
 .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--mute);margin-top:8px}
 details{margin:0}summary{cursor:pointer;font:700 17px "Pixelify Sans",system-ui,sans-serif;padding:2px 0}
@@ -87,6 +87,7 @@ body:not([data-tab="dex"]) #prev,body:not([data-tab="dex"]) #next{visibility:hid
 .det p{margin:6px 0}.row.open .det{display:block}.row.open{border-color:var(--t)}
 .chips2{display:flex;flex-wrap:wrap;gap:4px 14px;max-height:260px;overflow:auto}
 .more{display:block;width:100%;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:700}
+.lk{cursor:pointer;text-decoration:underline;text-decoration-color:var(--t);text-decoration-thickness:2px;text-underline-offset:3px}
 .msg{padding:40px 20px;text-align:center;color:var(--mute)}
 button.sh{background:none;border:1px solid #fff9;color:#fff;border-radius:99px;padding:3px 12px;margin-top:8px;font:inherit;font-size:13px}
 </style>
@@ -157,7 +158,7 @@ function sprite(s,sh){return `<img data-p="${spUrl(s,sh)}" src="${base+spUrl(s,s
 function moveRow(id,lv){
   const m=mv[id];if(!m)return"";
   const p=m.pwr?m.pwr:"—",a=m.acc?m.acc:"—";
-  return `<div class="mv" data-c="${CATS[m.split]||""}"><span class="lv">${lv??""}</span><span><span class="nm">${esc(m.name)}</span>${chip(m.types[0])}</span><span class="num">${SPLIT[m.split]||""} · ${p}/${a}/${m.pp}</span><small>${esc(m.desc)}</small></div>`;
+  return `<div class="mv" data-c="${CATS[m.split]||""}"><span class="lv">${lv??""}</span><span><span class="nm lk" data-mv="${id}">${esc(m.name)}</span>${chip(m.types[0])}</span><span class="num">${SPLIT[m.split]||""} · ${p}/${a}/${m.pp}</span><small>${esc(m.desc)}</small></div>`;
 }
 function box(title,ids,lv){
   if(!ids||!ids.length)return"";
@@ -176,10 +177,10 @@ function applyFilter(root){
   root.querySelectorAll(".mv[data-c]").forEach(r=>{const c=r.dataset.c.split(",").filter(Boolean).map(Number);r.classList.toggle("dim",fsel.size>0&&!c.some(x=>fsel.has(x)))});
 }
 function build(i,shiny){
-  const s=list[i],st=s.stats,bst=st.base.reduce((a,b)=>a+b,0);
+  const s=list[i],st=s.stats,bst=st.base.reduce((a,b)=>a+b,0),mx=Math.max(...st.base),mn=Math.min(...st.base);
   const types=[...new Set(st.types)].filter(t=>tn(t)!=="None"&&tn(t)!=="Mystery");
   const abis=[...new Set(st.abis)].filter(x=>x),inns=[...new Set(st.inns)].filter(x=>x);
-  const A=a=>`<div class="ab"><b>${esc(ab[a]?.name)}</b><span>${esc(ab[a]?.desc)}</span></div>`;
+  const A=a=>`<div class="ab"><b data-ab="${a}" class="lk">${esc(ab[a]?.name)}</b><span>${esc(ab[a]?.desc)}</span></div>`;
   const into=s.evolutions.filter(e=>e.in>0&&D.species[e.in]).map(e=>`${lnk(D.species[e.in].id)} <span class="num">${esc(evoText(e.kd,e.rs))}</span>`);
   const from=[];list.forEach(o=>o.evolutions.forEach(e=>{if(e.in>0&&D.species[e.in]?.id===s.id)from.push(`${lnk(o.id)} <span class="num">${esc(evoText(e.kd,e.rs))}</span>`)}));
   const forms=(s.forms||[]).map(x=>D.species[x]).filter(Boolean);
@@ -195,7 +196,7 @@ function build(i,shiny){
     <h1>${esc(s.name)}</h1><div class="no">No. ${s.dex?.id||"??"} · page ${i+1} of ${list.length}</div>
     <div class="chips">${types.map(chip).join("")}</div></div>
   ${s.dex?.desc||hw?`<section>${s.dex?.desc?`<p class="desc">${esc(s.dex.desc)}</p>`:""}${hw?`<div class="meta"><span>Height ${(hw[0]/10).toFixed(1)} m</span><span>Weight ${(hw[1]/10).toFixed(1)} kg</span></div>`:""}</section>`:""}
-  <section><h2>Base stats · ${bst}</h2><div class="st">${st.base.map((v,k)=>`<span>${STATS[k]}</span><b>${v}</b><div class="bar"><i style="width:${Math.min(100,v/180*100)}%"></i></div>`).join("")}</div></section>
+  <section><h2>Base stats · ${bst}</h2><div class="st">${st.base.map((v,k)=>`<span>${STATS[k]}</span><b>${v}</b><div class="bar"><i class="${mx===mn?"":v===mx?"hi":v===mn?"lo":""}" style="width:${Math.min(100,v/180*100)}%"></i></div>`).join("")}</div></section>
   <section><h2>Abilities</h2>${abis.map(A).join("")||"—"}</section>
   <section><h2>Innates</h2>${inns.map(A).join("")||"—"}</section></div>
   <div class="pg r">
@@ -242,7 +243,7 @@ let x0,y0;
 $("#page").addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
 $("#page").addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)>70&&Math.abs(dx)>2*Math.abs(dy))render(cur+(dx<0?1:-1),false,true)},{passive:true});
 $("#q").addEventListener("input",e=>{
-  const q=e.target.value.trim().toLowerCase(),r=$("#res");if(tab!=="dex"){lim=60;fill();return}
+  const q=e.target.value.trim().toLowerCase(),r=$("#res");if(tab!=="dex"){lim=60;pin=null;fill();return}
   if(!q||!list.length){r.style.display="none";return}
   const hits=list.filter(s=>s.name.toLowerCase().includes(q)||String(s.dex?.id)===q).slice(0,40);
   r.innerHTML=hits.map(s=>`<a href="#${s.id}" data-go="${s.id}">${sprite(s)}<span><b>${esc(s.name)}</b> <span class="num">No. ${s.dex?.id||"??"}</span></span></a>`).join("")||`<div class="msg">No Pokémon matches “${esc(q)}”.</div>`;
@@ -251,7 +252,7 @@ $("#q").addEventListener("input",e=>{
 addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!=="dex"){if(tab!==h)setTab(h);return}if(+h&&tab!=="dex")setTab("dex");const id=+location.hash.slice(1);if(id&&list.length&&byId[id]&&list[cur]?.id!==id)go(id)});
 
 /* ---- Abilities / Moves / Locations ---- */
-let tab="dex",lim=60,ABL=[],MVL=[],LCL=[];const abN={};
+let pin=null,tab="dex",lim=60,ABL=[],MVL=[],LCL=[];const abN={};
 const TABS={dex:"Search a Pokémon",abilities:"Search abilities",moves:"Search moves",locations:"Search places or Pokémon"};
 function indexExtra(){
   const label={land:"Grass",water:"Surfing",fish:"Fishing",honey:"Honey tree",rock:"Rock Smash",hidden:"Hidden"};
@@ -297,7 +298,8 @@ function fill(){
     all=LCL.filter(x=>!q||x.t.includes(q));
     row=l=>`<div class="row" data-k="lc" data-i="${l.id}"><div class="rh"><b>${esc(l.name)}</b><span class="num">${l.n} Pokémon</span></div><div class="det"></div></div>`;
   }
-  if(q){const nm=x=>(x.a?x.a.name:x.name).toLowerCase().includes(q);all=[...all.filter(nm),...all.filter(x=>!nm(x))]}
+  if(pin!=null){const k=all.findIndex(x=>x.a.id===pin);if(k>0)all=[all[k],...all.slice(0,k),...all.slice(k+1)]}
+  else if(q){const nm=x=>(x.a?x.a.name:x.name).toLowerCase().includes(q);all=[...all.filter(nm),...all.filter(x=>!nm(x))]}
   box.innerHTML=`<div class="cnt">${all.length} result${all.length===1?"":"s"}</div>`+(all.length?all.slice(0,lim).map(row).join(""):'<div class="msg">No matches.</div>')+(all.length>lim?'<button class="more">Show more</button>':"");
 }
 const chipsOf=(arr,cap=150)=>`<div class="chips2">${arr.slice(0,cap).map(s=>lnk(s.id)).join("")}</div>${arr.length>cap?`<div class="num">and ${arr.length-cap} more</div>`:""}`;
@@ -318,7 +320,14 @@ $("#other").addEventListener("click",e=>{
   if(!dt.dataset.done){dt.dataset.done=1;dt.innerHTML=detail(r.dataset.k,+r.dataset.i)}
 });
 $("#other").addEventListener("change",e=>{if(e.target.matches("select")){lim=60;fill()}});
-document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{pin=null;setTab(b.dataset.t)});
+document.addEventListener("click",e=>{
+  const x=e.target.closest("[data-ab],[data-mv]");if(!x)return;
+  const isA=x.dataset.ab!=null,id=+(isA?x.dataset.ab:x.dataset.mv),o=isA?ab[id]:mv[id];if(!o)return;
+  pin=null;setTab(isA?"abilities":"moves");
+  $("#q").value=o.name;pin=id;fill();
+  const r=$(`#vlist .row[data-i="${id}"]`);if(r)r.click();
+});
 (async function boot(){
   try{await load();index();indexExtra();const h0=location.hash.slice(1),id=+h0;render(byId[id]?byId[id]._i:0);if(TABS[h0]&&h0!=="dex")setTab(h0)}
   catch(e){const web=/^https?:/.test(location.protocol);$("#page").innerHTML=`<div class="msg">${D&&list.length?"The data loaded, but a page failed to draw.":"Couldn’t load the data from the NextDex site."}<br><br>Reason: ${esc(e&&e.message||e)}<br><br>${web?"":"This file was opened straight from storage or a preview, which blocks loading data. Host it online (for example GitHub Pages) and open that address in your phone’s browser.<br><br>"}<a class="link" onclick="location.reload()">Try again</a></div>`}
