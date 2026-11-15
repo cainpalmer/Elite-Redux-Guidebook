@@ -62,7 +62,7 @@ h1{font:700 30px/1.1 "Pixelify Sans",system-ui,sans-serif;margin:12px 0 4px;colo
 .chip{padding:2px 10px;border-radius:99px;font-weight:700;font-size:13px;color:#fff;background:color-mix(in srgb,var(--c) 80%,#000);border:2px solid #0003;text-shadow:0 1px 0 #0004}
 section{background:var(--card);border-radius:14px;margin:12px 12px 0;padding:12px 14px}
 h2{font:700 17px "Pixelify Sans",system-ui,sans-serif;margin:0 0 8px}
-.desc{font-style:italic;font-weight:700;font-size:17.5px;line-height:1.4;color:var(--mute);margin:0}
+.desc{font-style:italic;font-weight:700;font-size:17.5px;line-height:1.4;color:var(--ink);margin:0}
 .st{display:grid;grid-template-columns:38px 36px 1fr;gap:6px 8px;align-items:center;font-size:14px}
 .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:#8c9b9e}.bar i.hi{background:#3fa34d}.bar i.lo{background:#d24a43}
 .ab{margin:0 0 8px}.ab b{display:block}.ab span{color:var(--mute);font-size:14px}
@@ -106,6 +106,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:#8c8984 var
 .leaf{background:#8c8984 var(--bgimg) center/cover;background-blend-mode:multiply}
 section,.row{background:rgba(14,24,28,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .cnt{color:#c4d2cf}
+.desc{color:#fff}
 }
 </style>
 </head>
@@ -221,7 +222,7 @@ function build(i,shiny){
   const plc=places.length?`<section><details open><summary>Where to find (${places.length})</summary>${places.map(p=>`<div class="mv" style="display:block">${p}</div>`).join("")}</details></section>`:"";
   const foot=`<section><div class="meta"><span>Egg group: ${esc(egg||"—")}</span><span>EV yield: ${st.EVY.map((v,k)=>v?v+" "+STATS[k]:"").filter(Boolean).join(", ")||"—"}</span><span>Data v${esc(D._v)}</span><span><a class="link" id="ord">Order: ${mode==="dex"?"Dex number":"Game order"} (tap to switch)</a></span></div></section>`;
   const html=matchMedia("(min-width:1280px)").matches
-   ?`<div class="spread s4"><div class="c1">${hero}${plc}</div><div class="c2">${desc}${stats}${abil}${inn}${evo}${frm}</div><div class="mw">${bar}<div class="mc"><div>${lvl}${egm}</div><div>${tm}${tut}</div></div>${foot}</div></div>`
+   ?`<div class="spread s4"><div class="c1">${hero}${plc}</div><div class="c2">${desc}${stats}${abil}${inn}${evo}${frm}${foot}</div><div class="mw">${bar}<div class="mc"><div>${lvl}${egm}</div><div>${tm}${tut}</div></div></div></div>`
    :`<div class="spread"><div class="pg l">${hero}${desc}${stats}${abil}${inn}</div><div class="pg r">${evo}${frm}${plc}${bar}${mvs}${foot}</div></div>`;
   const c1=TC[tn(types[0]??st.types[0])]||"#7a8",c2=types[1]!=null?TC[tn(types[1])]:`color-mix(in srgb,${c1} 55%,#101830)`;
   return{html,t:c1,t2:c2};
